@@ -1,50 +1,44 @@
 # 1. Chemical Formula Parser:
 # Write a Python function capable of parsing chemical formulas such as "H2O", "NaCl", or "CF4". Your function should accurately count the occurrences of each element and return a dictionary with the element symbols as keys and their corresponding counts as values.
+
 import re  # for matching patterns in strings
 
 def parse_chemical_formula(formula):
-    pattern = r'([A-Z][a-z]*)(\d*)'  # defines a regular expression pattern,
-    elements = re.findall(pattern, formula)  # matches a capital letter followed by zero or more lowercase letters to represent symbol
+    """
+    Parses a chemical formula and returns a dictionary with element symbols as keys and their corresponding counts as values.
+    
+    Args:
+        formula (str): The chemical formula as a string (e.g., 'H2O', 'NaCl').
+    
+    Returns:
+        dict: A dictionary where keys are element symbols and values are their counts.
+    """
+    # Regular expression to capture element symbols and their counts
+    pattern = r'([A-Z][a-z]*)(\d*)'
+    elements = re.findall(pattern, formula)  # Find all element-count pairs in the formula
 
-    # Dictionary
-    element_counts = {}
+    element_counts = {}  # Dictionary to hold element symbols and their counts
 
     for element, count in elements:
-        if count == '':
-            count = 1
-        else:
-            count = int(count)
-        if element in element_counts:
-            element_counts[element] += count
-        else:
-            element_counts[element] = count
+        # Default count is 1 if no number is provided
+        count = int(count) if count else 1
+        
+        # Add the element to the dictionary or update its count if it already exists
+        element_counts[element] = element_counts.get(element, 0) + count
 
     return element_counts
 
-# Trial runs!
-formula = "H2O"
-result = parse_chemical_formula(formula)
-print( "H2O has: ", result)  #yay
+# Trial runs
+formulas = ["H2O", "NaCl", "CF4", "FCN", "CH2NH"]
 
-formula = "NaCl"
-result = parse_chemical_formula(formula)
-print(result)
+for formula in formulas:
+    result = parse_chemical_formula(formula)
+    print(f"{formula} has: {result}")
 
-formula = "CF4"
-result = parse_chemical_formula(formula)
-print(result)
-
-formula = "FCN"  # trial with 3 diff elements in a compound
-result = parse_chemical_formula(formula)
-print(result)
-
-formula = "CH2NH"  #trial with reoccuring H in diff places in the compound
-result = parse_chemical_formula(formula)
-print(result)
-
-formula = str(input())
-result = parse_chemical_formula(formula)
-print(result)
+# Allow input from the user to test other formulas
+user_formula = str(input("Enter a chemical formula: "))
+result = parse_chemical_formula(user_formula)
+print(f"{user_formula} has: {result}")
 
 # 2. Data Analysis Task:
 # Explore various aspects of the data ('dataset_quantemol.csv'). Your analysis should cover the following:
@@ -56,49 +50,48 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#read csv
+# Load the dataset
 df = pd.read_csv("dataset_quantemol.csv")
-print(df)
-print(df.info())
-print(df.describe())
+print("Initial Dataset Preview:\n", df.head())
+print("\nDataset Information:\n")
+df.info()  # Provides an overview of the dataset structure
+print("\nDataset Summary Statistics:\n", df.describe())  # Summary statistics for numerical columns
 
-#calculate the precentage of missing values in each value in each column
-missing_precentage = df.isnull().mean() * 100
-print("Precentage of Missing Values in Each Column: \n", missing_precentage)
+# Calculate the percentage of missing values in each column
+missing_percentage = df.isnull().mean() * 100
+print("\nPercentage of Missing Values in Each Column: \n", missing_percentage)
 
-# The majority of columns have 0% missing values however, the column 'ionisation_potential' has approximately 59.72% missing values, indicating a significant portion of values are missing. Handling missing values in 'ionisation_potential' may be necessary before analysis but due to this being such a large precentage of the data, exluding these points may also be too limiting. Isonisation potential might be missing values because: obtaining accurate ionization potential values can be challenging due to experimental limitations or some compounds may lack ionization potential data altogether.
-print(df)
+# Comment on missing values:
+# The column 'ionisation_potential' has approximately 59.72% missing values.
+# Given the high percentage, we need to decide how to handle it, either through imputation or careful exclusion.
 
-# Remove duplicates
+# Remove duplicates to ensure no repeated data
 df.drop_duplicates(inplace=True)
-print(df)
+print("\nDataset After Removing Duplicates:\n", df)
 
-# Correlation matrix
-correlation_matrix = df.iloc[:, 3:].corr() # taking away index, formula and names that can be observed from the excel sheet
+# Visualize the correlation matrix for numerical columns (excluding first three, which are non-numerical)
+correlation_matrix = df.iloc[:, 3:].corr()  # Exclude non-numerical columns (index, formula, names)
 plt.figure(figsize=(20, 10))
 sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
 plt.title('Correlation Matrix')
 plt.show()
 
-# Find empty columns or columns with all zero values
+# Identify and remove empty columns or columns with all zero values
 empty_columns = df.columns[(df == 0).all()]
 print("Empty columns or columns with all zero values:", empty_columns)
 
-df.drop(empty_columns, axis=1, inplace=True)  # remove empty columns
-correlation_matrix = df.iloc[:, 3:].corr()  # excluding the first three columns (index, formula, species_name)
+df.drop(empty_columns, axis=1, inplace=True)  # Remove empty columns
 
-# Plot
+# Re-calculate the correlation matrix after removing zero-value columns
+correlation_matrix = df.iloc[:, 3:].corr()  # Exclude first three non-numerical columns
 plt.figure(figsize=(20, 10))
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1) 
-plt.title('Correlation Matrix')
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)  # Set vmin and vmax for color range
+plt.title('Correlation Matrix After Removing Empty Columns')
 plt.show()
 
-# By adding vmax and vmin, all blue and red values are for negative and positive correlation respectively, thus aiding in data visualisation. Since the correlation matrix is symmetrical along the diagonal, I have decided to omit the upper triangle to avoid repeating information.
-
-empty_columns = df.columns[(df == 0).all()]
-df.drop(empty_columns, axis=1, inplace=True)
-correlation_matrix = df.iloc[:, 3:].corr()
+# Enhanced correlation matrix visualization: mask the upper triangle to avoid redundancy
 plt.figure(figsize=(20, 10))
-mask = np.triu(np.ones_like(df.corr(numeric_only = True)))
-sns.heatmap(df.corr(numeric_only = True), cmap='coolwarm', mask = mask, annot = True, vmin=-1, vmax=1)
-print(plt.show())
+mask = np.triu(np.ones_like(df.corr(numeric_only=True)))  # Mask to remove upper triangle
+sns.heatmap(df.corr(numeric_only=True), cmap='coolwarm', mask=mask, annot=True, vmin=-1, vmax=1)
+plt.title('Correlation Matrix with Masked Upper Triangle')
+plt.show()
