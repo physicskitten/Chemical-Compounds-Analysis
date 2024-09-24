@@ -19,6 +19,9 @@ This project contains two main functionalities:
 - Calculates missing value percentages for each column.
 - Removes duplicates to ensure data integrity.
 - Visualizes the correlation matrix between numerical features using Seaborn heatmaps.
+    - First heatmap: A standard correlation matrix.
+    - Second heatmap: A correlation matrix after removing columns with only zero values.
+    - Third heatmap: A correlation matrix with the upper triangle masked to remove redundant information.
 - Handles empty or zero-filled columns by removing them before analysis.
 - Displays heatmaps, with the option to mask the upper triangle for clarity.
 
